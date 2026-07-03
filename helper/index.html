@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>데이터 입력 도우미</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+<style>
+  :root{
+    --sky-deep:#4A5AA0; --sky-mid:#7C93E8; --paper:#FCFCFF; --ink:#363B6B;
+    --ink-muted:#8890BE; --border:#B9C4EE; --border-soft:#DDE4FA;
+    --mint:#AEE6C8; --mint-ink:#1F6B47; --rose:#FF97AE; --rose-ink:#7A0F2C;
+    --lavender:#DAD0FF; --butter:#FFE9A8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:'Pretendard Variable','Pretendard',-apple-system,sans-serif;
+    background:linear-gradient(180deg,#E8EDFB,#D2DCF8); color:var(--ink);
+    padding:24px 18px 60px;
+  }
+  .wrap{max-width:920px;margin:0 auto;}
+  h1{font-family:'Do Hyeon',sans-serif;color:var(--sky-deep);font-size:24px;margin:0 0 4px;}
+  .sub{color:var(--ink-muted);font-size:13px;margin:0 0 20px;}
+
+  .card{background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:18px;box-shadow:0 6px 18px rgba(74,90,160,0.12);}
+  .card h2{font-size:15px;margin:0 0 10px;color:var(--sky-deep);display:flex;align-items:center;gap:8px;}
+  .card .hint{font-size:12.5px;color:var(--ink-muted);margin:0 0 12px;line-height:1.6;}
+
+  .type-switch{display:flex;gap:8px;margin-bottom:18px;}
+  .type-switch button{
+    flex:1;border:1px solid var(--border);background:#DCE4FA;color:var(--ink-muted);
+    border-radius:10px;padding:10px;font-family:'Do Hyeon',sans-serif;font-size:14px;cursor:pointer;
+  }
+  .type-switch button.active{background:linear-gradient(180deg,var(--sky-mid),var(--sky-deep));color:#fff;border-color:var(--sky-deep);}
+
+  .mode-tabs{display:flex;gap:6px;margin-bottom:14px;}
+  .mode-tab{border:1px solid var(--border-soft);background:#F2F5FD;color:var(--ink-muted);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;}
+  .mode-tab.active{background:var(--sky-deep);color:#fff;border-color:var(--sky-deep);font-weight:600;}
+  .mode-panel{display:none;}
+  .mode-panel.active{display:block;}
+
+  textarea{
+    width:100%;min-height:150px;border:1px solid var(--border-soft);border-radius:8px;
+    padding:10px 12px;font-family:ui-monospace,'SFMono-Regular',Menlo,monospace;font-size:12.5px;
+    resize:vertical;color:var(--ink);background:#F8F9FE;
+  }
+  .col-legend{
+    background:#F2F5FD;border:1px dashed var(--border);border-radius:8px;padding:10px 12px;
+    font-size:12px;color:var(--ink-muted);margin-bottom:10px;line-height:1.7;
+  }
+  .col-legend b{color:var(--sky-deep);}
+
+  .btn{
+    border:1px solid var(--sky-deep);background:var(--sky-deep);color:#fff;border-radius:8px;
+    padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .btn:hover{opacity:.9;}
+  .btn.secondary{background:#fff;color:var(--sky-deep);}
+  .btn.ghost{background:transparent;border-color:var(--border-soft);color:var(--ink-muted);}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px 14px;}
+  label{display:block;font-size:12px;color:var(--ink-muted);font-weight:600;margin-bottom:4px;}
+  input[type=text], input[type=url], input[type=number], select{
+    width:100%;border:1px solid var(--border-soft);border-radius:7px;padding:8px 10px;
+    font-size:13.5px;font-family:inherit;color:var(--ink);background:#F8F9FE;
+  }
+  .field{margin-bottom:10px;}
+  .field.span2{grid-column:span 2;}
+  .field.span3{grid-column:span 3;}
+  textarea.memo{min-height:60px;}
+
+  .status-msg{font-size:12.5px;padding:8px 12px;border-radius:8px;margin-top:8px;display:none;}
+  .status-msg.ok{display:block;background:var(--mint);color:var(--mint-ink);}
+  .status-msg.err{display:block;background:var(--rose);color:#fff;}
+
+  table.preview{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:12px;}
+  table.preview th{text-align:left;padding:6px 8px;background:#EEF2FC;color:var(--ink-muted);font-size:11px;position:sticky;top:0;}
+  table.preview td{padding:6px 8px;border-bottom:1px solid var(--border-soft);vertical-align:top;}
+  table.preview tr:hover{background:#F5F7FE;}
+  .preview-scroll{max-height:340px;overflow-y:auto;border:1px solid var(--border-soft);border-radius:8px;margin-top:10px;}
+  .del-btn{border:none;background:var(--rose);color:#fff;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;}
+  .tag-mini{background:var(--lavender);color:#5B4BAE;border-radius:999px;padding:1px 7px;font-size:10.5px;margin:1px;display:inline-block;}
+  .count-badge{background:var(--butter);color:#7A5A00;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:700;}
+
+  .codebox{width:100%;min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:12px;border-radius:8px;border:1px solid var(--border-soft);padding:12px;background:#2B2F52;color:#E4E8FF;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🧩 데이터 입력 도우미</h1>
+  <p class="sub">붙여넣거나 입력한 내용을 <b>data.js에 바로 넣을 수 있는 코드</b>로 바꿔드려요. 이 파일 자체는 사이트에 올리는 게 아니라, 로컬에서 데이터 옮길 때만 쓰는 도구예요.</p>
+
+  <div class="type-switch">
+    <button class="active" data-type="fanfic">📖 팬픽</button>
+    <button data-type="trpg">🎲 TRPG 시나리오</button>
+  </div>
+
+  <!-- 입력 카드 -->
+  <div class="card">
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="bulk">📋 일괄 붙여넣기 (추천)</button>
+      <button class="mode-tab" data-mode="single">✏️ 하나씩 입력</button>
+    </div>
+
+    <!-- 일괄 붙여넣기 -->
+    <div class="mode-panel active" id="panel-bulk">
+      <p class="hint">
+        엑셀 / 구글 시트 / 노션 표에 리스트를 정리해두셨다면, 아래 <b>컬럼 순서 그대로</b> 셀 범위를 드래그해서 복사한 뒤 붙여넣으세요.
+        (탭으로 구분된 형태로 자동 인식돼요. 한 줄 = 한 항목.)
+      </p>
+      <div class="col-legend" id="colLegend"></div>
+      <textarea id="bulkInput" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
+      <div class="btn-row">
+        <button class="btn" id="parseBulkBtn">파싱해서 목록에 추가</button>
+        <button class="btn ghost" id="clearBulkBtn">입력창 비우기</button>
+      </div>
+      <div class="status-msg" id="bulkStatus"></div>
+    </div>
+
+    <!-- 개별 입력 -->
+    <div class="mode-panel" id="panel-single">
+      <div class="grid2" id="singleFormFanfic">
+        <div class="field span2"><label>제목</label><input type="text" id="f_title"></div>
+        <div class="field"><label>장르</label><input type="text" id="f_category" placeholder="로맨스, 판타지..."></div>
+        <div class="field"><label>평점 (0~5)</label><input type="number" id="f_rating" min="0" max="5" value="0"></div>
+        <div class="field"><label>현재 챕터</label><input type="number" id="f_metricCurrent" value="0"></div>
+        <div class="field"><label>전체 챕터 (모르면 비워두기)</label><input type="number" id="f_metricTotal"></div>
+        <div class="field"><label>완결 여부</label>
+          <select id="f_completed"><option value="false">연재중</option><option value="true">완결</option></select>
+        </div>
+        <div class="field"><label>태그 (쉼표로 구분)</label><input type="text" id="f_tags" placeholder="설아×리안, 재회, 힐링"></div>
+        <div class="field span2"><label>링크</label><input type="url" id="f_link" placeholder="https://..."></div>
+        <div class="field span2"><label>메모</label><textarea class="memo" id="f_memo"></textarea></div>
+      </div>
+
+      <div class="grid3" id="singleFormTrpg" style="display:none;">
+        <div class="field span3"><label>제목</label><input type="text" id="t_title"></div>
+        <div class="field"><label>시스템</label><input type="text" id="t_category" placeholder="크툴루, D&D..."></div>
+        <div class="field"><label>평점 (0~5)</label><input type="number" id="t_rating" min="0" max="5" value="0"></div>
+        <div class="field"><label>인원</label><input type="text" id="t_playerCount" placeholder="3~4인"></div>
+        <div class="field"><label>플레이타임</label><input type="text" id="t_playtime" placeholder="3~4시간"></div>
+        <div class="field"><label>보유 여부</label>
+          <select id="t_completed"><option value="false">위시</option><option value="true">보유중</option></select>
+        </div>
+        <div class="field"><label>알뇌/몰뇌</label>
+          <select id="t_spoiler"><option value="blind">🙈 몰뇌</option><option value="known">🧠 알뇌</option></select>
+        </div>
+        <div class="field span2"><label>태그 (쉼표로 구분)</label><input type="text" id="t_tags" placeholder="원샷, 공포, 초보자용"></div>
+        <div class="field span3"><label>링크</label><input type="url" id="t_link" placeholder="https://..."></div>
+        <div class="field span3"><label>메모</label><textarea class="memo" id="t_memo"></textarea></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="addSingleBtn">목록에 추가</button>
+      </div>
+      <div class="status-msg" id="singleStatus"></div>
+    </div>
+  </div>
+
+  <!-- 미리보기 -->
+  <div class="card">
+    <h2>📑 지금까지 모은 항목 <span class="count-badge" id="countBadge">0개</span></h2>
+    <p class="hint">틀린 항목은 오른쪽 삭제 버튼으로 지우고 다시 추가하시면 돼요. 여기서 직접 수정은 안 되니, 틀렸으면 지우고 다시 넣어주세요.</p>
+    <div class="preview-scroll">
+      <table class="preview">
+        <thead><tr id="previewHead"></tr></thead>
+        <tbody id="previewBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 저장/불러오기 -->
+  <div class="card">
+    <h2>💾 진행 중 저장 / 이어하기</h2>
+    <p class="hint">2000개를 한 번에 다 못 옮기실 테니, 중간에 JSON으로 저장해두고 다음에 다시 불러와서 이어서 작업하실 수 있어요.</p>
+    <div class="btn-row">
+      <button class="btn secondary" id="saveJsonBtn">현재까지 JSON으로 저장</button>
+      <label class="btn secondary" style="display:inline-block;">
+        JSON 불러와서 이어하기
+        <input type="file" id="loadJsonInput" accept="application/json" style="display:none;">
+      </label>
+      <button class="btn ghost" id="resetAllBtn">전체 초기화</button>
+    </div>
+  </div>
+
+  <!-- 코드 생성 -->
+  <div class="card">
+    <h2>🚀 코드로 내보내기</h2>
+    <p class="hint">아래 코드를 그대로 <code>js/data.js</code>의 해당 배열 부분과 바꿔치기하시면 돼요.</p>
+    <div class="btn-row">
+      <button class="btn" id="generateBtn">코드 생성하기</button>
+      <button class="btn secondary" id="copyBtn">복사하기</button>
+      <button class="btn secondary" id="downloadBtn">.js 파일로 다운로드</button>
+    </div>
+    <textarea class="codebox" id="codeOutput" readonly placeholder="위에서 [코드 생성하기]를 누르면 여기에 나와요."></textarea>
+  </div>
+
+</div>
+
+<script>
+let activeType = 'fanfic';
+let items = { fanfic: [], trpg: [] };
+
+const LEGEND = {
+  fanfic: `<b>컬럼 순서</b>: 제목 → 장르 → 평점(0~5) → 현재챕터 → 전체챕터(모르면 빈칸) → 완결여부(완결/연재중, 또는 TRUE/FALSE) → 태그(쉼표로 여러 개, 셀 안에서 " , "로 구분) → 링크 → 메모<br>
+  <b>예시 한 줄</b>: 밤의 온실 [Tab] 로맨스 [Tab] 5 [Tab] 24 [Tab] 24 [Tab] 완결 [Tab] 설아×리안, 재회, 힐링 [Tab] https://example.com [Tab] 3장에서 울었음`,
+  trpg: `<b>컬럼 순서</b>: 제목 → 시스템 → 평점(0~5) → 인원 → 플레이타임 → 보유여부(보유중/위시, 또는 TRUE/FALSE) → 알뇌/몰뇌(알뇌/몰뇌) → 태그(쉼표로 여러 개) → 링크 → 메모<br>
+  <b>예시 한 줄</b>: 항구도시의 실종자들 [Tab] 크툴루 [Tab] 5 [Tab] 3~4인 [Tab] 3~4시간 [Tab] 보유중 [Tab] 알뇌 [Tab] 원샷, 공포 [Tab] https://example.com [Tab] GM으로 두 번 돌렸음`
+};
+
+const PREVIEW_COLS = {
+  fanfic: ['제목','장르','평점','챕터','완결','태그','삭제'],
+  trpg: ['제목','시스템','평점','인원','플레이타임','상태','알뇌/몰뇌','태그','삭제']
+};
+
+function $(id){ return document.getElementById(id); }
+
+/* ---------- 타입 전환 ---------- */
+document.querySelectorAll('.type-switch button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    activeType = btn.dataset.type;
+    document.querySelectorAll('.type-switch button').forEach(b=>b.classList.toggle('active', b===btn));
+    $('singleFormFanfic').style.display = activeType==='fanfic' ? 'grid' : 'none';
+    $('singleFormTrpg').style.display = activeType==='trpg' ? 'grid' : 'none';
+    $('colLegend').innerHTML = LEGEND[activeType];
+    renderPreview();
+    $('codeOutput').value = '';
+  });
+});
+$('colLegend').innerHTML = LEGEND.fanfic;
+
+/* ---------- 모드 탭 ---------- */
+document.querySelectorAll('.mode-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b===btn));
+    document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+    $('panel-' + btn.dataset.mode).classList.add('active');
+  });
+});
+
+/* ---------- 유틸 ---------- */
+function parseBool(str){
+  const s = (str||'').trim().toLowerCase();
+  return ['true','완결','보유중','보유','알뇌','1','o','y','yes'].includes(s);
+}
+function parseTags(str){
+  return (str||'').split(',').map(t=>t.trim()).filter(Boolean);
+}
+function showStatus(el, msg, ok){
+  el.textContent = msg;
+  el.className = 'status-msg ' + (ok ? 'ok' : 'err');
+}
+
+/* ---------- 일괄 붙여넣기 파싱 ---------- */
+$('parseBulkBtn').addEventListener('click', ()=>{
+  const raw = $('bulkInput').value;
+  if(!raw.trim()){ showStatus($('bulkStatus'), '붙여넣은 내용이 없어요.', false); return; }
+  const lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
+  let added = 0, skipped = 0;
+
+  lines.forEach(line=>{
+    const cols = line.split('\t').map(c=>c.trim());
+    if(activeType === 'fanfic'){
+      if(cols.length < 4 || !cols[0]){ skipped++; return; }
+      const [title, category, rating, metricCurrent, metricTotal, completed, tags, link, memo] = cols;
+      items.fanfic.push({
+        title, category: category||'', rating: Number(rating)||0,
+        metricCurrent: Number(metricCurrent)||0,
+        metricTotal: (metricTotal===undefined||metricTotal==='') ? null : Number(metricTotal),
+        completed: parseBool(completed),
+        tags: parseTags(tags),
+        link: link || '',
+        memo: memo || ''
+      });
+      added++;
+    } else {
+      if(cols.length < 4 || !cols[0]){ skipped++; return; }
+      const [title, category, rating, playerCount, playtime, completed, spoiler, tags, link, memo] = cols;
+      items.trpg.push({
+        title, category: category||'', rating: Number(rating)||0,
+        playerCount: playerCount || '', playtime: playtime || '',
+        completed: parseBool(completed),
+        spoiler: (spoiler||'').trim() === '알뇌' || (spoiler||'').trim().toLowerCase()==='known' ? 'known' : 'blind',
+        tags: parseTags(tags),
+        link: link || '',
+        memo: memo || ''
+      });
+      added++;
+    }
+  });
+
+  renderPreview();
+  showStatus($('bulkStatus'), `${added}개 추가했어요${skipped ? ` (형식이 이상해서 ${skipped}개는 건너뜀)` : ''}.`, true);
+  $('bulkInput').value = '';
+});
+
+$('clearBulkBtn').addEventListener('click', ()=>{ $('bulkInput').value=''; });
+
+/* ---------- 개별 입력 ---------- */
+$('addSingleBtn').addEventListener('click', ()=>{
+  if(activeType === 'fanfic'){
+    const title = $('f_title').value.trim();
+    if(!title){ showStatus($('singleStatus'), '제목은 필수예요.', false); return; }
+    items.fanfic.push({
+      title, category: $('f_category').value.trim(),
+      rating: Number($('f_rating').value)||0,
+      metricCurrent: Number($('f_metricCurrent').value)||0,
+      metricTotal: $('f_metricTotal').value === '' ? null : Number($('f_metricTotal').value),
+      completed: $('f_completed').value === 'true',
+      tags: parseTags($('f_tags').value),
+      link: $('f_link').value.trim(),
+      memo: $('f_memo').value.trim()
+    });
+    ['f_title','f_category','f_rating','f_metricCurrent','f_metricTotal','f_tags','f_link','f_memo'].forEach(id=>$(id).value='');
+    $('f_rating').value = 0; $('f_metricCurrent').value = 0;
+  } else {
+    const title = $('t_title').value.trim();
+    if(!title){ showStatus($('singleStatus'), '제목은 필수예요.', false); return; }
+    items.trpg.push({
+      title, category: $('t_category').value.trim(),
+      rating: Number($('t_rating').value)||0,
+      playerCount: $('t_playerCount').value.trim(),
+      playtime: $('t_playtime').value.trim(),
+      completed: $('t_completed').value === 'true',
+      spoiler: $('t_spoiler').value,
+      tags: parseTags($('t_tags').value),
+      link: $('t_link').value.trim(),
+      memo: $('t_memo').value.trim()
+    });
+    ['t_title','t_category','t_rating','t_playerCount','t_playtime','t_tags','t_link','t_memo'].forEach(id=>$(id).value='');
+    $('t_rating').value = 0;
+  }
+  renderPreview();
+  showStatus($('singleStatus'), '목록에 추가했어요.', true);
+});
+
+/* ---------- 미리보기 렌더 ---------- */
+function renderPreview(){
+  const list = items[activeType];
+  $('countBadge').textContent = list.length + '개';
+  $('previewHead').innerHTML = PREVIEW_COLS[activeType].map(c=>`<th>${c}</th>`).join('');
+
+  $('previewBody').innerHTML = list.map((it, idx)=>{
+    const tagsHtml = it.tags.map(t=>`<span class="tag-mini">${t}</span>`).join('');
+    if(activeType === 'fanfic'){
+      return `<tr>
+        <td>${it.title}</td><td>${it.category}</td><td>${it.rating}</td>
+        <td>${it.metricCurrent}/${it.metricTotal ?? '?'}</td>
+        <td>${it.completed ? '완결' : '연재중'}</td>
+        <td>${tagsHtml}</td>
+        <td><button class="del-btn" data-idx="${idx}">삭제</button></td>
+      </tr>`;
+    } else {
+      return `<tr>
+        <td>${it.title}</td><td>${it.category}</td><td>${it.rating}</td>
+        <td>${it.playerCount}</td><td>${it.playtime}</td>
+        <td>${it.completed ? '보유중' : '위시'}</td>
+        <td>${it.spoiler === 'known' ? '🧠' : '🙈'}</td>
+        <td>${tagsHtml}</td>
+        <td><button class="del-btn" data-idx="${idx}">삭제</button></td>
+      </tr>`;
+    }
+  }).join('');
+
+  document.querySelectorAll('.del-btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      items[activeType].splice(Number(b.dataset.idx), 1);
+      renderPreview();
+    });
+  });
+}
+renderPreview();
+
+/* ---------- JSON 저장/불러오기 ---------- */
+$('saveJsonBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(items, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'library-progress.json';
+  a.click();
+});
+
+$('loadJsonInput').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(parsed.fanfic) items.fanfic = parsed.fanfic;
+      if(parsed.trpg) items.trpg = parsed.trpg;
+      renderPreview();
+      showStatus($('bulkStatus'), '이전 진행 상황을 불러왔어요.', true);
+    }catch(err){
+      showStatus($('bulkStatus'), 'JSON 파일을 읽는 데 실패했어요.', false);
+    }
+  };
+  reader.readAsText(file);
+});
+
+$('resetAllBtn').addEventListener('click', ()=>{
+  if(confirm('정말 전체 목록을 지울까요? 되돌릴 수 없어요.')){
+    items.fanfic = []; items.trpg = [];
+    renderPreview();
+  }
+});
+
+/* ---------- 코드 생성 ---------- */
+function jsStr(v){ return JSON.stringify(v ?? ''); }
+
+function buildCode(){
+  const list = items[activeType];
+  const varName = activeType === 'fanfic' ? 'FICS_CURATED' : 'TRPG_CURATED';
+
+  const body = list.map(it=>{
+    if(activeType === 'fanfic'){
+      return `  {
+    title: ${jsStr(it.title)},
+    category: ${jsStr(it.category)},
+    rating: ${it.rating},
+    metricCurrent: ${it.metricCurrent},
+    metricTotal: ${it.metricTotal === null ? 'null' : it.metricTotal},
+    completed: ${it.completed},
+    tags: [${it.tags.map(jsStr).join(', ')}],
+    link: ${jsStr(it.link)},
+    memo: ${jsStr(it.memo)}
+  }`;
+    } else {
+      return `  {
+    title: ${jsStr(it.title)},
+    category: ${jsStr(it.category)},
+    rating: ${it.rating},
+    playerCount: ${jsStr(it.playerCount)},
+    playtime: ${jsStr(it.playtime)},
+    completed: ${it.completed},
+    spoiler: ${jsStr(it.spoiler)},
+    tags: [${it.tags.map(jsStr).join(', ')}],
+    link: ${jsStr(it.link)},
+    memo: ${jsStr(it.memo)}
+  }`;
+    }
+  }).join(',\n');
+
+  return `const ${varName} = [\n${body}\n];`;
+}
+
+$('generateBtn').addEventListener('click', ()=>{
+  $('codeOutput').value = buildCode();
+});
+
+$('copyBtn').addEventListener('click', async ()=>{
+  const box = $('codeOutput');
+  if(!box.value){ box.value = buildCode(); }
+  try{
+    await navigator.clipboard.writeText(box.value);
+    alert('복사했어요!');
+  }catch(e){
+    box.select();
+    document.execCommand('copy');
+    alert('복사했어요! (대체 방식)');
+  }
+});
+
+$('downloadBtn').addEventListener('click', ()=>{
+  const code = $('codeOutput').value || buildCode();
+  $('codeOutput').value = code;
+  const blob = new Blob([code], {type:'text/javascript'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = activeType === 'fanfic' ? 'fics-curated.js' : 'trpg-curated.js';
+  a.click();
+});
+</script>
+</body>
+</html>
