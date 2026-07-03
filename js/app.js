@@ -3,6 +3,22 @@
    이 파일은 보통 건드리실 필요 없어요.
 ============================================================ */
 
+/* ------------------------------------------------------------
+   ⭐ 나중에 "팬픽은 안 쓰고 시나리오만 쓴다" 같은 상황이 되면
+   여기 값만 바꾸면 돼요. 탭이 사라지고 그 하나만 보이는 사이트가 됩니다.
+
+     'both'    → 지금처럼 팬픽/TRPG 탭 둘 다 (기본값)
+     'fanfic'  → 팬픽만 (탭 숨김)
+     'trpg'    → TRPG 시나리오만 (탭 숨김)
+
+   진짜로 완전히 분리된 두 개의 사이트(서로 다른 깃허브 저장소·URL)로
+   나누고 싶으실 땐, 이 폴더를 통째로 복사해서 저장소 두 개를 만들고
+   각 저장소에서 이 값만 다르게 설정하시면 돼요. data.js 안의 안 쓰는
+   배열(FICS_CURATED 또는 TRPG_CURATED)은 지우셔도 되고 그냥 두셔도
+   화면에는 안 나오니 상관없어요.
+------------------------------------------------------------ */
+const SITE_MODE = 'both'; // 'both' | 'fanfic' | 'trpg'
+
 // dummy-data.js가 로드되어 있으면 그걸 합치고, 없으면 실제 데이터만 사용
 const FICS = FICS_CURATED.concat(typeof DUMMY_FICS !== 'undefined' ? DUMMY_FICS : []);
 const TRPG = TRPG_CURATED.concat(typeof DUMMY_TRPG !== 'undefined' ? DUMMY_TRPG : []);
@@ -43,7 +59,7 @@ const CONFIG = {
 };
 
 /* ================= 상태 ================= */
-let activeType = "fanfic";
+let activeType = (SITE_MODE === 'fanfic' || SITE_MODE === 'trpg') ? SITE_MODE : "fanfic";
 let searchTerm = "";
 let sortMode = "recent";
 let statusFilter = "all";
@@ -65,30 +81,34 @@ function rebuildTagState(){
 }
 let allTags = rebuildTagState();
 
+/* ================= 타입별 DOM 라벨 적용 ================= */
+function applyTypeToDOM(){
+  const cfg = currentConfig();
+  document.querySelectorAll('.type-tab').forEach(b => b.classList.toggle('active', b.dataset.type === activeType));
+  document.getElementById('windowTitle').textContent = cfg.windowTitle;
+  document.getElementById('addressBar').textContent = cfg.address;
+  document.getElementById('brandTitle').textContent = cfg.brandTitle;
+  document.getElementById('brandSub').textContent = cfg.brandSub;
+  document.getElementById('thCategory').firstChild.textContent = cfg.categoryLabel + " ";
+  document.getElementById('thMetric').firstChild.textContent = cfg.metricLabel + " ";
+  document.getElementById('thStatus').firstChild.textContent = cfg.statusLabel + " ";
+  document.getElementById('sortMetricOpt').textContent = cfg.sortMetricLabel;
+  document.getElementById('statusDoneBtn').textContent = cfg.doneLabel;
+  document.getElementById('statusOngoingBtn').textContent = cfg.ongoingLabel;
+  document.getElementById('taskbarStart').textContent = activeType === 'fanfic' ? '팬픽 서재' : 'TRPG 서고';
+
+  document.getElementById('thExtra').style.display = cfg.hasExtraColumn ? '' : 'none';
+  if(cfg.hasExtraColumn) document.getElementById('thExtra').firstChild.textContent = cfg.extraLabel + " ";
+  document.getElementById('thSpoiler').style.display = cfg.hasSpoilerColumn ? '' : 'none';
+  document.getElementById('subTabs').classList.toggle('show', cfg.hasSpoilerColumn);
+}
+
 /* ================= 타입 전환 ================= */
 document.querySelectorAll('.type-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     if(btn.dataset.type === activeType) return;
     activeType = btn.dataset.type;
-    document.querySelectorAll('.type-tab').forEach(b => b.classList.toggle('active', b === btn));
-
-    const cfg = currentConfig();
-    document.getElementById('windowTitle').textContent = cfg.windowTitle;
-    document.getElementById('addressBar').textContent = cfg.address;
-    document.getElementById('brandTitle').textContent = cfg.brandTitle;
-    document.getElementById('brandSub').textContent = cfg.brandSub;
-    document.getElementById('thCategory').firstChild.textContent = cfg.categoryLabel + " ";
-    document.getElementById('thMetric').firstChild.textContent = cfg.metricLabel + " ";
-    document.getElementById('thStatus').firstChild.textContent = cfg.statusLabel + " ";
-    document.getElementById('sortMetricOpt').textContent = cfg.sortMetricLabel;
-    document.getElementById('statusDoneBtn').textContent = cfg.doneLabel;
-    document.getElementById('statusOngoingBtn').textContent = cfg.ongoingLabel;
-    document.getElementById('taskbarStart').textContent = activeType === 'fanfic' ? '팬픽 서재' : 'TRPG 서고';
-
-    document.getElementById('thExtra').style.display = cfg.hasExtraColumn ? '' : 'none';
-    if(cfg.hasExtraColumn) document.getElementById('thExtra').firstChild.textContent = cfg.extraLabel + " ";
-    document.getElementById('thSpoiler').style.display = cfg.hasSpoilerColumn ? '' : 'none';
-    document.getElementById('subTabs').classList.toggle('show', cfg.hasSpoilerColumn);
+    applyTypeToDOM();
 
     searchTerm = ""; document.getElementById('searchInput').value = "";
     statusFilter = "all";
@@ -103,6 +123,13 @@ document.querySelectorAll('.type-tab').forEach(btn => {
     render();
   });
 });
+
+// SITE_MODE로 단일 타입이 강제된 경우: 탭을 숨기고 해당 타입 라벨을 최초 적용
+if(SITE_MODE === 'fanfic' || SITE_MODE === 'trpg'){
+  const tabsRow = document.querySelector('.tabs-row');
+  if(tabsRow) tabsRow.style.display = 'none';
+}
+applyTypeToDOM();
 
 document.getElementById('subTabs').addEventListener('click', e => {
   const btn = e.target.closest('.sub-tab');
